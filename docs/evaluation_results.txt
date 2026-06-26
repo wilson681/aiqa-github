@@ -1,0 +1,44 @@
+Loading + preprocessing data ...
+  users=610  movies=3650  ratings=90274
+Creating per-user train/test split (80/20) ...
+  train=72236  test=18038
+
+Training models on the training split ...
+  - Content-Based (TF-IDF + cosine)
+  - Item-based KNN
+  - FunkSVD (matrix factorization)
+  - Hybrid (CBF + FunkSVD, alpha=0.7)
+
+Evaluating rating prediction (RMSE / MAE) ...
+  Content-Based  RMSE=0.9058  MAE=0.7066  coverage=99.93%
+  Item-KNN       RMSE=0.8395  MAE=0.6378  coverage=100.00%
+  FunkSVD        RMSE=0.8472  MAE=0.6479  coverage=100.00%
+  Hybrid         RMSE=0.8401  MAE=0.6458  coverage=100.00%
+
+Evaluating Top-10 ranking (Precision/Recall/F1) ...
+  Content-Based  P@10=0.0057  R@10=0.0057  F1@10=0.0039  HitRate=4.84%
+  Item-KNN       P@10=0.0404  R@10=0.0445  F1@10=0.0352  HitRate=28.05%
+  FunkSVD        P@10=0.0491  R@10=0.0356  F1@10=0.0328  HitRate=30.55%
+  Hybrid         P@10=0.0489  R@10=0.0361  F1@10=0.0330  HitRate=31.55%
+
+
+TABLE 1 — Rating Prediction Accuracy (lower is better)
+======================================================
+Method                 RMSE           MAE      coverage
+-------------------------------------------------------
+Content-Based        0.9058        0.7066        0.9993
+Item-KNN             0.8395        0.6378        1.0000
+FunkSVD              0.8472        0.6479        1.0000
+Hybrid               0.8401        0.6458        1.0000
+
+
+TABLE 2 — Top-10 Ranking Quality (higher is better)
+===================================================
+Method         Precision@10     Recall@10         F1@10       HitRate
+---------------------------------------------------------------------
+Content-Based        0.0057        0.0057        0.0039        0.0484
+Item-KNN             0.0404        0.0445        0.0352        0.2805
+FunkSVD              0.0491        0.0356        0.0328        0.3055
+Hybrid               0.0489        0.0361        0.0330        0.3155
+
+Done in 176.3s
