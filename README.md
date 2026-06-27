@@ -18,20 +18,30 @@ the **MovieLens (ml-latest-small)** dataset.
 # 1. install dependencies (Python 3.11 recommended)
 pip install -r requirements.txt
 
-# 2. run the interactive demo (the prototype)
+# 2a. run the GUI app (recommended for the demo)  ← the "real" app
+pip install streamlit
+streamlit run app_streamlit.py        # opens MovieMind in your browser
+
+# 2b. or the lightweight console demo (zero extra deps)
 python app_cli.py
 
 # 3. reproduce the evaluation / comparison tables
 python run_evaluation.py            # full run
 python run_evaluation.py --quick    # fast sampled run (seconds)
-
-# 4. (optional) nicer web UI
-pip install streamlit
-streamlit run app_streamlit.py
 ```
 
 The dataset is bundled in `data/`, so everything runs **offline** — nothing is
 downloaded at runtime.
+
+### MovieMind GUI (`app_streamlit.py`)
+A Netflix-style web interface — a real, usable app, not just a results dump:
+
+- 🔍 **Search** the movie catalogue.
+- 👍 **Like** / 🚫 **Not interested** — recommendations update **live** as you react.
+- ✨ **Build my own taste** — a brand-new user (no account) gets personalised
+  picks from the movies they just liked (item cold-start).
+- 👤 **Existing profile** — pick a user and **compare all 4 algorithms** side by side.
+- 🎭 **Filter by genre**, choose the recommendation engine, and see match scores.
 
 ---
 

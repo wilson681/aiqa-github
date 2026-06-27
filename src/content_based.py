@@ -182,6 +182,37 @@ class ContentBasedRecommender:
         """Cold-start helper: recommend from a single liked movie (no history)."""
         return self.similar_movies(movie_id, top_n=top_n)
 
+    def recommend_for_profile(self, profile: dict[int, float], top_n: int = 10,
+                              exclude_ids=None):
+        """Recommend for an AD-HOC taste profile built in the GUI.
+
+        `profile` maps movieId -> rating (e.g. a 'Like' adds {id: 5.0}).  This
+        powers the "Build my own taste" mode: a brand-new user with no account
+        gets recommendations purely from the movies they just liked — exactly
+        the item cold-start scenario content-based filtering excels at.
+        """
+        self._check_fitted()
+        cols, rates = [], []
+        for mid, r in profile.items():
+            if mid in self.data.i_index:
+                cols.append(self.data.i_index[mid])
+                rates.append(float(r))
+        if not cols:
+            return []
+        cols = np.array(cols)
+        rates = np.array(rates, dtype=np.float32)
+
+        taste = np.asarray(rates @ self.tfidf_matrix[cols])         # taste vector
+        scores = (self.tfidf_matrix @ taste.T).ravel() / (np.abs(rates).sum() + 1e-9)
+
+        scores[cols] = -np.inf                                       # hide liked
+        for mid in (exclude_ids or []):                              # hide 'not interested'
+            if mid in self.data.i_index:
+                scores[self.data.i_index[mid]] = -np.inf
+        order = np.argsort(scores)[::-1][:top_n]
+        return [(self.data.movie_ids[k], float(scores[k])) for k in order
+                if np.isfinite(scores[k])]
+
     # ------------------------------------------------------------------ #
     def _check_fitted(self):
         if not self._fitted:

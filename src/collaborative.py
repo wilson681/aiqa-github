@@ -191,6 +191,39 @@ class ItemBasedCF:
         refined.sort(key=lambda t: t[1], reverse=True)
         return refined[:top_n]
 
+    def recommend_for_profile(self, profile: dict[int, float], top_n: int = 10,
+                              exclude_ids=None, min_support: int = 10):
+        """Recommend for an AD-HOC taste profile built in the GUI.
+
+        Same closed-form score as `recommend`, but the user's centred ratings
+        come from an arbitrary {movieId: rating} dict instead of a stored row —
+        this lets a brand-new GUI user (no account) get item-KNN recommendations
+        from the movies they just liked.
+        """
+        self._check_fitted()
+        dev = np.zeros(self.data.n_movies, dtype=np.float32)
+        rated = []
+        for mid, r in profile.items():
+            if mid in self.data.i_index:
+                j = self.data.i_index[mid]
+                dev[j] = float(r) - self.item_means[j]
+                rated.append(j)
+        if not rated:
+            return []
+
+        user_space = self.norm_items.T @ dev
+        scores = self.item_means + self.norm_items @ user_space
+
+        scores[np.array(rated)] = -np.inf                            # hide liked
+        if min_support > 1:
+            scores[self.item_support < min_support] = -np.inf        # hide obscure
+        for mid in (exclude_ids or []):                              # hide 'not interested'
+            if mid in self.data.i_index:
+                scores[self.data.i_index[mid]] = -np.inf
+        order = np.argsort(scores)[::-1][:top_n]
+        return [(self.data.movie_ids[k], float(np.clip(scores[k], 0.5, 5.0)))
+                for k in order if np.isfinite(scores[k])]
+
     def _check_fitted(self):
         if not self._fitted:
             raise RuntimeError("Call .fit() before using ItemBasedCF.")

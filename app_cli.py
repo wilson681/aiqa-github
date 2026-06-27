@@ -21,6 +21,7 @@ Features
 from __future__ import annotations
 
 import sys
+import time
 
 from src.collaborative import FunkSVD, ItemBasedCF
 from src.content_based import ContentBasedRecommender
@@ -38,17 +39,27 @@ BANNER = r"""
 
 class RecommenderApp:
     def __init__(self):
-        print(BANNER)
-        print("Loading dataset and training models (a few seconds) ...\n")
+        print(BANNER, flush=True)
+        # Step-by-step progress (flush=True) so the first-run wait — Python
+        # importing pandas/sklearn then training FunkSVD — never looks frozen.
+        t0 = time.time()
+        print("Loading dataset ...", flush=True)
         self.data = load_data()
+        print(f"  -> {self.data.n_users} users, {self.data.n_movies} movies, "
+              f"{len(self.data.ratings)} ratings", flush=True)
+
+        print("[1/4] Training Content-Based (TF-IDF + cosine) ...", flush=True)
         self.content = ContentBasedRecommender(self.data).fit()
+        print("[2/4] Training Collaborative Item-KNN ...", flush=True)
         self.knn = ItemBasedCF(self.data, k=30).fit()
+        print("[3/4] Training Collaborative FunkSVD (~20s, please wait) ...", flush=True)
         self.svd = FunkSVD(self.data, n_factors=50, n_epochs=20).fit()
+        print("[4/4] Building Hybrid (CBF + SVD) ...", flush=True)
         self.hybrid = HybridRecommender(self.data, cf_model="svd", alpha=0.7)
         # reuse already-trained base models inside the hybrid
         self.hybrid.content, self.hybrid.cf, self.hybrid._fitted = self.content, self.svd, True
-        print(f"Ready!  {self.data.n_users} users, {self.data.n_movies} movies, "
-              f"{len(self.data.ratings)} ratings loaded.\n")
+
+        print(f"\nReady in {time.time() - t0:.0f}s — all models trained.\n", flush=True)
 
     # ------------------------------------------------------------------ #
     #  small input helpers
